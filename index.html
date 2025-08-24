@@ -15,9 +15,133 @@
       width: 100%;
       height: 100%;
     }
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: Arial, sans-serif;
+      text-align: center;
+      z-index: 1000;
+    }
+    .error {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      z-index: 1001;
+      display: none;
+    }
+    .btn {
+      background: #007cba;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
   </style>
 </head>
 <body>
-  <iframe src="https://drive.google.com/file/d/1H0WbrYnj8ZPL3Bw9w0A2H8w5DbDlTjHR/preview" width="100%" height="100%"></iframe>
+  <div class="loading" id="loading">Carregando PDF...</div>
+  
+  <div class="error" id="error">
+    <h3>GitHub LFS não funciona com GitHub Pages</h3>
+    <p>Arquivos LFS não são servidos pelo GitHub Pages</p>
+    <button class="btn" onclick="tryAlternative()">Tentar Alternativa</button>
+    <button class="btn" onclick="window.open('https://github.com/AMGH-Representacoes/AnjoDaModa/raw/main/Assets/AnjoDaModa_Portfolios_2025.pdf')">Abrir no GitHub</button>
+  </div>
+
+  <iframe id="pdf-viewer" src="" width="100%" height="100%"></iframe>
+
+  <script>
+    const methods = [
+      // Método 1: Tentar URL raw do GitHub (pode não funcionar com LFS)
+      'https://github.com/AMGH-Representacoes/AnjoDaModa/raw/main/Assets/AnjoDaModa_Portfolios_2025.pdf',
+      
+      // Método 2: Tentar URL raw com PDF.js
+      'https://mozilla.github.io/pdf.js/web/viewer.html?file=https://github.com/AMGH-Representacoes/AnjoDaModa/raw/main/Assets/AnjoDaModa_Portfolios_2025.pdf',
+      
+      // Método 3: Tentar GitHub media URL
+      'https://media.githubusercontent.com/media/AMGH-Representacoes/AnjoDaModa/main/Assets/AnjoDaModa_Portfolios_2025.pdf',
+      
+      // Método 4: PDF.js com media URL
+      'https://mozilla.github.io/pdf.js/web/viewer.html?file=https://media.githubusercontent.com/media/AMGH-Representacoes/AnjoDaModa/main/Assets/AnjoDaModa_Portfolios_2025.pdf'
+    ];
+    
+    let currentMethod = 0;
+    const iframe = document.getElementById('pdf-viewer');
+    const loading = document.getElementById('loading');
+    const error = document.getElementById('error');
+    
+    function tryLoadPDF() {
+      if (currentMethod >= methods.length) {
+        // Todos os métodos falharama
+        loading.style.display = 'none';
+        error.style.display = 'block';
+        return;
+      }
+      
+      console.log(`Tentando método ${currentMethod + 1}: ${methods[currentMethod]}`);
+      iframe.src = methods[currentMethod];
+      
+      // Timeout para próximo método
+      setTimeout(() => {
+        currentMethod++;
+        tryLoadPDF();
+      }, 10000); // 10 segundos por método
+    }
+    
+    function tryAlternative() {
+      error.style.display = 'none';
+      loading.style.display = 'block';
+      
+      // Reset e tenta novamente
+      currentMethod = 0;
+      tryLoadPDF();
+    }
+    
+    // Detecta se carregou com sucesso
+    iframe.onload = function() {
+      // Verifica se realmente carregou o PDF
+      setTimeout(() => {
+        try {
+          if (iframe.contentWindow && iframe.contentWindow.location.href !== 'about:blank') {
+            loading.style.display = 'none';
+            console.log('PDF carregado com sucesso!');
+          }
+        } catch (e) {
+          // Cross-origin, mas provavelmente carregou
+          loading.style.display = 'none';
+        }
+      }, 2000);
+    };
+    
+    iframe.onerror = function() {
+      console.log('Erro no método atual, tentando próximo...');
+      currentMethod++;
+      tryLoadPDF();
+    };
+    
+    // Inicia tentativas
+    window.onload = function() {
+      tryLoadPDF();
+    };
+    
+    // Remove loading após timeout total
+    setTimeout(() => {
+      if (loading.style.display !== 'none') {
+        loading.style.display = 'none';
+        error.style.display = 'block';
+      }
+    }, 45000); // 45 segundos total
+  </script>
 </body>
 </html>
