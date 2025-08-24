@@ -10,138 +10,95 @@
       height: 100%;
       width: 100%;
     }
+    
     iframe {
       border: none;
       width: 100%;
       height: 100%;
     }
-    .loading {
+    
+    .loading-modal {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
       font-family: Arial, sans-serif;
-      text-align: center;
-      z-index: 1000;
     }
-    .error {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-family: Arial, sans-serif;
-      text-align: center;
+    
+    .loading-content {
       background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-      z-index: 1001;
-      display: none;
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      max-width: 400px;
+      width: 90%;
     }
-    .btn {
-      background: #007cba;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      cursor: pointer;
-      margin: 5px;
+    
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007cba;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      color: #333;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    
+    .loading-subtext {
+      color: #666;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <div class="loading" id="loading">Carregando PDF...</div>
-  
-  <div class="error" id="error">
-    <h3>GitHub LFS não funciona com GitHub Pages</h3>
-    <p>Arquivos LFS não são servidos pelo GitHub Pages</p>
-    <button class="btn" onclick="tryAlternative()">Tentar Alternativa</button>
-    <button class="btn" onclick="window.open('https://github.com/AMGH-Representacoes/AnjoDaModa/raw/main/Assets/AnjoDaModa_Portfolios_2025.pdf')">Abrir no GitHub</button>
+  <div class="loading-modal" id="loadingModal">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <div class="loading-text">Carregando Catálogo</div>
+      <div class="loading-subtext">Arquivo grande, aguarde alguns segundos...</div>
+    </div>
   </div>
 
-  <iframe id="pdf-viewer" src="" width="100%" height="100%"></iframe>
+  <iframe 
+    id="pdf-viewer" 
+    src="https://mozilla.github.io/pdf.js/web/viewer.html?file=https://media.githubusercontent.com/media/AMGH-Representacoes/AnjoDaModa/main/Assets/AnjoDaModa_Portfolios_2025.pdf" 
+    width="100%" 
+    height="100%">
+  </iframe>
 
   <script>
-    const methods = [
-      // Método 1: Tentar URL raw do GitHub (pode não funcionar com LFS)
-      'https://github.com/AMGH-Representacoes/AnjoDaModa/raw/main/Assets/AnjoDaModa_Portfolios_2025.pdf',
-      
-      // Método 2: Tentar URL raw com PDF.js
-      'https://mozilla.github.io/pdf.js/web/viewer.html?file=https://github.com/AMGH-Representacoes/AnjoDaModa/raw/main/Assets/AnjoDaModa_Portfolios_2025.pdf',
-      
-      // Método 3: Tentar GitHub media URL
-      'https://media.githubusercontent.com/media/AMGH-Representacoes/AnjoDaModa/main/Assets/AnjoDaModa_Portfolios_2025.pdf',
-      
-      // Método 4: PDF.js com media URL
-      'https://mozilla.github.io/pdf.js/web/viewer.html?file=https://media.githubusercontent.com/media/AMGH-Representacoes/AnjoDaModa/main/Assets/AnjoDaModa_Portfolios_2025.pdf'
-    ];
-    
-    let currentMethod = 0;
+    const loadingModal = document.getElementById('loadingModal');
     const iframe = document.getElementById('pdf-viewer');
-    const loading = document.getElementById('loading');
-    const error = document.getElementById('error');
     
-    function tryLoadPDF() {
-      if (currentMethod >= methods.length) {
-        // Todos os métodos falharama
-        loading.style.display = 'none';
-        error.style.display = 'block';
-        return;
-      }
-      
-      console.log(`Tentando método ${currentMethod + 1}: ${methods[currentMethod]}`);
-      iframe.src = methods[currentMethod];
-      
-      // Timeout para próximo método
-      setTimeout(() => {
-        currentMethod++;
-        tryLoadPDF();
-      }, 10000); // 10 segundos por método
-    }
-    
-    function tryAlternative() {
-      error.style.display = 'none';
-      loading.style.display = 'block';
-      
-      // Reset e tenta novamente
-      currentMethod = 0;
-      tryLoadPDF();
-    }
-    
-    // Detecta se carregou com sucesso
+    // Remove modal quando iframe carregar
     iframe.onload = function() {
-      // Verifica se realmente carregou o PDF
       setTimeout(() => {
-        try {
-          if (iframe.contentWindow && iframe.contentWindow.location.href !== 'about:blank') {
-            loading.style.display = 'none';
-            console.log('PDF carregado com sucesso!');
-          }
-        } catch (e) {
-          // Cross-origin, mas provavelmente carregou
-          loading.style.display = 'none';
-        }
-      }, 2000);
+        loadingModal.style.display = 'none';
+      }, 1000); // Delay de 1 segundo para suavizar a transição
     };
     
-    iframe.onerror = function() {
-      console.log('Erro no método atual, tentando próximo...');
-      currentMethod++;
-      tryLoadPDF();
-    };
-    
-    // Inicia tentativas
-    window.onload = function() {
-      tryLoadPDF();
-    };
-    
-    // Remove loading após timeout total
+    // Remove modal após timeout (caso não detecte o load)
     setTimeout(() => {
-      if (loading.style.display !== 'none') {
-        loading.style.display = 'none';
-        error.style.display = 'block';
-      }
-    }, 45000); // 45 segundos total
+      loadingModal.style.display = 'none';
+    }, 15000); // 15 segundos máximo
   </script>
 </body>
 </html>
